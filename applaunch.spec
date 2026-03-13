@@ -1,6 +1,6 @@
 Name:           applaunch
-Version:        0.1.1
-Release:        2
+Version:        0.1.2
+Release:        3
 Summary:        Launcher and dock for the Niri compositor
 
 License:        GPL-3.0-or-later
@@ -12,7 +12,7 @@ URL:            https://github.com/marek12306/applaunch
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  meson
-BuildRequires:  ninja-build
+BuildRequires:  ninja
 BuildRequires:  vala 
 BuildRequires:  gcc
 BuildRequires:  pkgconfig(glib-2.0) 
@@ -50,6 +50,9 @@ for the Niri compositor.
 %{_bindir}/%{name}
 
 %changelog
+* Fri Mar 13 2026 deepivin <marek12306@gmail.com> 0.1.2-3
+- require ninja instead of ninja-build for better compatibility between distributions
+
 * Fri Mar 13 2026 deepivin <marek12306@gmail.com> 0.1.1-2
 - fix: yes (marek12306@gmail.com)
 
