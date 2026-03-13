@@ -34,4 +34,5 @@ executable(
     sources,
     dependencies: dependencies,
     c_args: '-DGETTEXT_PACKAGE="applaunch"',
+    install: true
 )
