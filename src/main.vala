@@ -7,6 +7,7 @@ const string APP_ID = "sur.deepivin.applaunch";
 class AppLaunch : Adw.Application {
     private LauncherWindow? launcher_window = null;
     private ArrayList<DockWindow> active_docks = new ArrayList<DockWindow> ();
+    private uint dock_timeout_id = 0;
 
     public AppLaunch () {
         Object (application_id : APP_ID);
@@ -37,16 +38,23 @@ class AppLaunch : Adw.Application {
     }
 
     private void setup_dock () {
-        reload_dock ();
-
         var monitors = Gdk.Display.get_default ().get_monitors ();
         monitors.items_changed.connect ((pos, removed, added) => {
             stdout.printf ("Display configuration changed, reloading dock..\n");
 
-            Timeout.add (500, () => {
+            if (dock_timeout_id != 0)
+                Source.remove (dock_timeout_id);
+
+            dock_timeout_id = Timeout.add (500, () => {
                 reload_dock ();
+                dock_timeout_id = 0;
                 return Source.REMOVE;
             });
+        });
+
+        Timeout.add (200, () => {
+            reload_dock ();
+            return Source.REMOVE;
         });
     }
 
