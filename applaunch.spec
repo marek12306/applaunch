@@ -1,6 +1,6 @@
 Name:           applaunch
-Version:        0.0.0
-Release:        0%{?dist}
+Version:        0.1.0
+Release:        1%{?dist}
 Summary:        Launcher and dock for the Niri compositor
 
 License:        GPL-3.0-or-later
@@ -50,3 +50,6 @@ for the Niri compositor.
 %{_bindir}/%{name}
 
 %changelog
+* Fri Mar 13 2026 deepivin <marek12306@gmail.com> 0.1.0-1
+- Initial package build
+
