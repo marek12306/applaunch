@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        Launcher and dock for the Niri compositor
 
 License:        GPL-3.0-or-later
-URL:            https://github.com/twoj-profil/applaunch
+URL:            https://github.com/marek12306/applaunch
 # Sources can be obtained by
 # git clone https://github.com/marek12306/applaunch
 # cd applaunch
