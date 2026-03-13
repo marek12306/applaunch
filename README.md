@@ -15,7 +15,7 @@ It was inspired by GNOME desktop workflow and was designed to work with converti
 - json-glib-1.0
 - gee-0.8
 
-# Inspiration(s)
+# Inspirations
 - https://github.com/System64fumo/sysmenu
 - https://github.com/nwg-piotr/nwg-drawer
 - https://github.com/libredeb/lightpad
