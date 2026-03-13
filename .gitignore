@@ -1,0 +1,14 @@
+build/
+builddir/
+
+*.o
+*.so
+*~
+
+.vscode/
+.idea/
+*.swp
+
+*.tar.gz
+*.tar.xz
+*.rpm
