@@ -41,7 +41,7 @@ public class FileProvider : Object, SearchProvider {
                     system_visible += path;
                 else if (is_home && is_hidden)
                     home_hidden += path;
-                else 
+                else
                     system_hidden += path;
             }
 
@@ -69,6 +69,14 @@ public class FileProvider : Object, SearchProvider {
     }
 
     public void activate (SearchResult result) {
-        Utils.launch_detached ("xdg-open", result.id);
+        var file = File.new_for_path (result.id);
+        var file_launcher = new Gtk.FileLauncher (file);
+        file_launcher.launch.begin (null, null, (obj, res) => {
+            try {
+                file_launcher.launch.end (res);
+            } catch (Error e) {
+                stderr.printf ("Couldn't open '%s': %s\n", result.id, e.message);
+            }
+        });
     }
 }
