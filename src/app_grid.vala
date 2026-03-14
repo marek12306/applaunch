@@ -467,11 +467,7 @@ public class AppGrid : Box {
 
     private void launch_app(AppInfo app_info) {
         try {
-            var desktop_info = app_info as DesktopAppInfo;
-            if (desktop_info != null && desktop_info.get_filename() != null)
-                Utils.launch_detached("gio launch", desktop_info.get_filename());
-            else
-                app_info.launch(null, new AppLaunchContext());
+            app_info.launch(null, null);
             app_launched();
         } catch (Error e) {
             stderr.printf("Launch error: %s\n", e.message);

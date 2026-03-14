@@ -106,11 +106,7 @@ class DockAppButton : Button {
 
     public void launch_new_instance () {
         try {
-            var desktop_info = app_info as DesktopAppInfo;
-            if (desktop_info != null && desktop_info.get_filename () != null)
-                Utils.launch_detached ("gio launch", desktop_info.get_filename ());
-            else
-                app_info.launch (null, new AppLaunchContext ());
+            app_info.launch (null, null);
         } catch (Error e) {}
     }
 
