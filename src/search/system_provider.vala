@@ -91,7 +91,7 @@ public class SystemProvider : Object, SearchProvider {
                     Process.spawn_command_line_async (selected_action.command);
                 }
         } catch (Error e) {
-            warning ("Błąd podczas wywoływania akcji: %s", e.message);
+            warning ("Error activating result: %s", e.message);
         }
     }
 }

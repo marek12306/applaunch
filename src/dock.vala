@@ -317,7 +317,7 @@ class DockAppButton : Button {
         listbox.selection_mode = SelectionMode.NONE;
 
         foreach (var win in this.open_windows) {
-            string display_title = win.title != "" ? win.title : "Okno aplikacji";
+            string display_title = win.title != "" ? win.title : "Application window";
             if (display_title.char_count () > 40)
                 display_title = display_title.substring (0, 37) + "...";
 
@@ -404,7 +404,8 @@ class DockAppButton : Button {
         box.append (new_win_btn);
 
         if (this.open_windows.length > 0) {
-            string label = this.open_windows.length > 1 ? "Close all windows" : "Close window";
+            string label = this.open_windows.length > 1 ?
+                "Close all windows" : "Close window";
             var close_btn = new Button.with_label (label);
             close_btn.add_css_class ("flat");
             close_btn.clicked.connect (() => {

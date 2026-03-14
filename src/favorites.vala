@@ -132,7 +132,7 @@ public class Favorites : Object {
         try {
             FileUtils.set_contents(path, builder.str);
         } catch (Error e) {
-            warning("Błąd zapisu ulubionych: %s", e.message);
+            warning("Error saving favorites: %s", e.message);
         }
     }
 }

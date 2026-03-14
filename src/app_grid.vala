@@ -474,7 +474,7 @@ public class AppGrid : Box {
                 app_info.launch(null, new AppLaunchContext());
             app_launched();
         } catch (Error e) {
-            stderr.printf("Nie udało się uruchomić programu: %s\n", e.message);
+            stderr.printf("Launch error: %s\n", e.message);
         }
     }
 
@@ -616,7 +616,7 @@ public class AppGrid : Box {
                                     string cmd = "setsid " + clean_cmd.strip();
                                     Process.spawn_command_line_async(cmd);
                                 } catch (Error e) {
-                                    stderr.printf("Błąd uruchamiania akcji '%s': %s\n", readable_name, e.message);
+                                    stderr.printf("Error launching action '%s': %s\n", readable_name, e.message);
                                 }
                             }
                             this.set_visible(false);
@@ -631,7 +631,7 @@ public class AppGrid : Box {
         }
 
         var btn = (Button) ((Box) flowbox_child.context_menu.get_child()).get_first_child();
-        btn.label = Favorites.get_default().is_favorite(app_id) ? "Usuń z ulubionych" : "Dodaj do ulubionych";
+        btn.label = Favorites.get_default().is_favorite(app_id) ? "Remove from favorites" : "Add to favorites";
 
         Gdk.Rectangle rect = { (int) x, (int) y, 1, 1 };
         flowbox_child.context_menu.set_pointing_to(rect);

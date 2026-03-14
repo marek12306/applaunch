@@ -16,7 +16,7 @@ public class ShellProvider : Object, SearchProvider {
         var results = new List<SearchResult> ();
         var icon = new ThemedIcon ("utilities-terminal-symbolic");
 
-        string display = "Uruchom polecenie: " + cmd;
+        string display = "Run command: " + cmd;
 
         results.append (new SearchResult (cmd, display, icon, this));
 
@@ -33,7 +33,7 @@ public class ShellProvider : Object, SearchProvider {
 
             app_info.launch (null, new AppLaunchContext ());
         } catch (Error e) {
-            stderr.printf ("Nie udało się uruchomić komendy '%s' w terminalu: %s\n", result.id, e.message);
+            stderr.printf ("Failed to launch command '%s' in terminal: %s\n", result.id, e.message);
         }
     }
 }

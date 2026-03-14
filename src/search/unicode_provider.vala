@@ -81,7 +81,7 @@ public class UnicodeProvider : Object, SearchProvider {
                 warning ("Błąd ładowania bazy Unicode: %s", e.message);
             }
         } else {
-            warning ("Brak pliku UnicodeData.txt. Pobierz go i umieść w ~/.local/share/unicode/ lub zainstaluj pakiet systemowy.");
+            warning ("UnicodeData.txt not found in standard locations. Unicode search will be unavailable.");
         }
     }
 
