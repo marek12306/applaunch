@@ -1,5 +1,5 @@
 Name:           applaunch
-Version:        0.1.3
+Version:        0.2.0
 Release:        1
 Summary:        Launcher and dock for the Niri compositor
 
@@ -54,6 +54,13 @@ for the Niri compositor.
 %{_bindir}/%{name}
 
 %changelog
+* Sat Mar 14 2026 deepivin <marek12306@gmail.com> 0.2.0-1
+- refactor: use Gtk.FileLauncher instead of xdg-open (marek12306@gmail.com)
+- refactor: use AppInfo.launch instead of calling gio launch
+  (marek12306@gmail.com)
+- refactor: use niri ipc directly (marek12306@gmail.com)
+- fix: language (marek12306@gmail.com)
+
 * Fri Mar 13 2026 deepivin <marek12306@gmail.com> 0.1.3-1
 - fix: race condition in dock reloading and initialization
   (marek12306@gmail.com)
