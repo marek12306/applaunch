@@ -3,181 +3,6 @@ using GtkLayerShell;
 using GLib;
 using Json;
 
-public class NiriWindow : GLib.Object {
-    public uint32 id;
-    public string app_id;
-    public string output;
-    public string title;
-
-    public NiriWindow (uint32 id, string app_id, string output, string title) {
-        this.id = id;
-        this.app_id = app_id;
-        this.output = output;
-        this.title = title;
-    }
-}
-
-public class AppWindowList : GLib.Object {
-    public NiriWindow[] windows = new NiriWindow[0];
-}
-
-public class NiriWindowManager : GLib.Object {
-    private static NiriWindowManager? _instance = null;
-
-    public signal void windows_changed ();
-
-    public HashTable<string, string> ws_map;
-    public List<NiriWindow> windows;
-
-    private bool is_fetching = false;
-
-    private NiriWindowManager () {
-        ws_map = new HashTable<string, string> (str_hash, str_equal);
-        windows = new List<NiriWindow> ();
-
-        Timeout.add (500, on_timeout);
-        fetch_data_async.begin ();
-    }
-
-    public static NiriWindowManager get_default () {
-        if (_instance == null)
-            _instance = new NiriWindowManager ();
-        return _instance;
-    }
-
-    private bool on_timeout () {
-        if (!is_fetching) {
-            fetch_data_async.begin ();
-        }
-        return Source.CONTINUE;
-    }
-
-    private async void fetch_data_async () {
-        is_fetching = true;
-
-        var new_ws_map = yield get_workspace_outputs_async ();
-
-        var new_windows = yield get_niri_windows_async (new_ws_map);
-
-        this.ws_map = new_ws_map;
-        this.windows = (owned) new_windows;
-
-        windows_changed ();
-
-        is_fetching = false;
-    }
-
-    private async HashTable<string, string> get_workspace_outputs_async () {
-        var map = new HashTable<string, string> (str_hash, str_equal);
-        try {
-            var launcher = new SubprocessLauncher (SubprocessFlags.STDOUT_PIPE | SubprocessFlags.STDERR_SILENCE);
-            string[] args = { "niri", "msg", "-j", "workspaces" };
-            var subprocess = launcher.spawnv (args);
-
-            string stdout_buf;
-            yield subprocess.communicate_utf8_async (null, null, out stdout_buf, null);
-
-            if (stdout_buf == null || stdout_buf.strip () == "")
-                return map;
-
-            int start_idx = stdout_buf.index_of_char ('[');
-            if (start_idx == -1)
-                return map;
-
-            var parser = new Json.Parser ();
-            parser.load_from_data (stdout_buf.substring (start_idx), -1);
-            unowned Json.Node root = parser.get_root ();
-
-            if (root != null && root.get_node_type () == Json.NodeType.ARRAY) {
-                unowned Json.Array array = root.get_array ();
-                for (uint i = 0; i < array.get_length (); i++) {
-                    unowned Json.Node element = array.get_element (i);
-                    if (element != null && element.get_node_type () == Json.NodeType.OBJECT) {
-                        unowned Json.Object obj = element.get_object ();
-                        if (obj.has_member ("id") && obj.has_member ("output")) {
-                            unowned Json.Node id_node = obj.get_member ("id");
-                            unowned Json.Node out_node = obj.get_member ("output");
-                            if (id_node != null && !id_node.is_null () && out_node != null && !out_node.is_null ()) {
-                                map.insert (id_node.get_int ().to_string (), out_node.get_string ());
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Error e) {}
-        return map;
-    }
-
-    private async List<NiriWindow> get_niri_windows_async (HashTable<string, string> ws_map) {
-        var list = new List<NiriWindow> ();
-        try {
-            var launcher = new SubprocessLauncher (SubprocessFlags.STDOUT_PIPE | SubprocessFlags.STDERR_SILENCE);
-            string[] args = { "niri", "msg", "-j", "windows" };
-            var subprocess = launcher.spawnv (args);
-
-            string stdout_buf;
-            yield subprocess.communicate_utf8_async (null, null, out stdout_buf, null);
-
-            if (stdout_buf == null || stdout_buf.strip () == "")
-                return list;
-
-            int start_idx = stdout_buf.index_of_char ('[');
-            if (start_idx == -1)
-                return list;
-
-            var parser = new Json.Parser ();
-            parser.load_from_data (stdout_buf.substring (start_idx), -1);
-            unowned Json.Node root = parser.get_root ();
-
-            if (root != null && root.get_node_type () == Json.NodeType.ARRAY) {
-                unowned Json.Array array = root.get_array ();
-                uint length = array.get_length ();
-
-                for (uint i = 0; i < length; i++) {
-                    unowned Json.Node element = array.get_element (i);
-                    if (element != null && element.get_node_type () == Json.NodeType.OBJECT) {
-                        unowned Json.Object obj = element.get_object ();
-                        uint32 id = 0;
-                        string app_id = "";
-                        string output = "";
-                        string title = "";
-
-                        if (obj.has_member ("id")) {
-                            unowned Json.Node id_node = obj.get_member ("id");
-                            if (id_node != null && !id_node.is_null ())
-                                id = (uint32) id_node.get_int ();
-                        }
-                        if (obj.has_member ("app_id")) {
-                            unowned Json.Node node = obj.get_member ("app_id");
-                            if (node != null && !node.is_null ())
-                                app_id = node.get_string ();
-                        }
-                        if (obj.has_member ("workspace_id")) {
-                            unowned Json.Node ws_node = obj.get_member ("workspace_id");
-                            if (ws_node != null && !ws_node.is_null ()) {
-                                string ws_id = ws_node.get_int ().to_string ();
-                                if (ws_map.contains (ws_id))
-                                    output = ws_map.lookup (ws_id);
-                            }
-                        }
-
-                        if (obj.has_member ("title")) {
-                            unowned Json.Node title_node = obj.get_member ("title");
-                            if (title_node != null && !title_node.is_null ())
-                                title = title_node.get_string ();
-                        }
-
-                        if (app_id != "" && id != 0)
-                            list.append (new NiriWindow (id, app_id, output, title));
-                    }
-                }
-            }
-        } catch (Error e) {}
-        return list;
-    }
-}
-
-
 class DockAppButton : Button {
     public AppInfo app_info;
     public bool is_favorite;
@@ -253,10 +78,9 @@ class DockAppButton : Button {
                 if (this.launcher.get_visible ())
                     this.launcher.set_visible (false);
             } else if (this.open_windows.length == 1) {
-                try {
-                    uint32 wid = this.open_windows[0].id;
-                    Process.spawn_command_line_async ("niri msg action focus-window --id " + wid.to_string ());
-                } catch (Error e) {}
+                uint32 wid = this.open_windows[0].id;
+                NiriIpc.get_default ().action_focus_window (wid);
+
                 if (this.launcher.get_visible ())
                     this.launcher.set_visible (false);
             } else {
@@ -343,11 +167,7 @@ class DockAppButton : Button {
 
             close_btn.clicked.connect (() => {
                 window_selector.popdown ();
-                try {
-                    Process.spawn_command_line_async ("niri msg action close-window --id " + wid.to_string ());
-                } catch (Error e) {
-                    stderr.printf ("Error occured when closing window: %s\n", e.message);
-                }
+                NiriIpc.get_default ().action_close_window (wid);
                 if (this.launcher.get_visible ())
                     this.launcher.set_visible (false);
             });
@@ -364,9 +184,9 @@ class DockAppButton : Button {
             if (index >= 0 && index < this.open_windows.length) {
                 uint32 wid = this.open_windows[index].id;
                 window_selector.popdown ();
-                try {
-                    Process.spawn_command_line_async ("niri msg action focus-window --id " + wid.to_string ());
-                } catch (Error e) {}
+
+                NiriIpc.get_default ().action_focus_window (wid);
+
                 if (this.launcher.get_visible ())
                     this.launcher.set_visible (false);
             }
@@ -410,13 +230,9 @@ class DockAppButton : Button {
             close_btn.add_css_class ("flat");
             close_btn.clicked.connect (() => {
                 context_menu.popdown ();
-                foreach (var win in this.open_windows) {
-                    try {
-                        Process.spawn_command_line_async ("niri msg action close-window --id " + win.id.to_string ());
-                    } catch (Error e) {
-                        stderr.printf ("Error occured when closing window: %s\n", e.message);
-                    }
-                }
+                foreach (var win in this.open_windows)
+                    NiriIpc.get_default ().action_close_window (win.id);
+
                 if (this.launcher.get_visible ())
                     this.launcher.set_visible (false);
             });
@@ -727,9 +543,7 @@ public class DockWindow : ApplicationWindow {
 
         overview_btn.clicked.connect (() => {
             overview_btn.set_state_flags (StateFlags.NORMAL, true);
-            try {
-                Process.spawn_command_line_async ("niri msg action toggle-overview");
-            } catch (Error e) {}
+            NiriIpc.get_default ().action_toggle_overview ();
         });
         apps_box.append (overview_btn);
     }

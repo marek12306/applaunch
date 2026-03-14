@@ -18,6 +18,7 @@ sources = files(
     'search/shell_provider.vala',
     'search/system_provider.vala',
     'search/unicode_provider.vala',
+    'niri_ipc.vala',
     'app_grid.vala',
     'config.vala',
     'dock.vala',
