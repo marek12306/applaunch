@@ -353,11 +353,12 @@ public class DockWindow : ApplicationWindow {
         GtkLayerShell.set_layer (this, GtkLayerShell.Layer.TOP);
         GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.NONE);
         GtkLayerShell.set_anchor (this, GtkLayerShell.Edge.BOTTOM, true);
-        GtkLayerShell.set_margin (this, GtkLayerShell.Edge.BOTTOM, -100);
+        GtkLayerShell.set_margin (this, GtkLayerShell.Edge.BOTTOM, 0);
 
         wrapper = new Box (Orientation.VERTICAL, 0);
         wrapper.valign = Align.END;
         wrapper.halign = Align.CENTER;
+        wrapper.set_opacity (0.0);
         this.set_child (wrapper);
 
         var top_trigger = new Box (Orientation.HORIZONTAL, 0);
@@ -446,10 +447,16 @@ public class DockWindow : ApplicationWindow {
         favorites_changed_id = Favorites.get_default ().changed.connect (reload_dock);
         reload_dock ();
 
-        Timeout.add (100, () => {
+        Timeout.add (50, () => {
+            int h = wrapper.get_height ();
+            if (h <= 0)
+                return Source.CONTINUE;
+
             current_offset = get_hidden_offset ();
             current_target = current_offset;
             GtkLayerShell.set_margin (this, GtkLayerShell.Edge.BOTTOM, (int) current_offset);
+
+            wrapper.set_opacity (1.0);
             return Source.REMOVE;
         });
 
