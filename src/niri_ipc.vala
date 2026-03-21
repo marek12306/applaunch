@@ -130,24 +130,61 @@ public class NiriIpc : GLib.Object {
         }
         return null;
     }
+
+    public async void listen_event_stream (SourceFunc callback) {
+        if (socket_path == null)
+            return;
+
+        try {
+            var client = new SocketClient ();
+            var address = new UnixSocketAddress (socket_path);
+            var connection = yield client.connect_async (address);
+
+            var output = connection.get_output_stream ();
+            size_t bytes_written;
+            yield output.write_all_async ("\"EventStream\"\n".data, Priority.DEFAULT, null, out bytes_written);
+
+            var input = new DataInputStream (connection.get_input_stream ());
+            while (true) {
+                size_t length;
+                string? response = yield input.read_line_async (Priority.DEFAULT, null, out length);
+
+                if (response == null)break;
+
+                Idle.add (() => {
+                    callback ();
+                    return Source.REMOVE;
+                });
+            }
+        } catch (Error e) {
+            stderr.printf ("niri event stream error: %s\n", e.message);
+        }
+    }
 }
 
 public class NiriWindowManager : GLib.Object {
     private static NiriWindowManager? _instance = null;
+    private bool is_fetching = false;
+    private bool needs_refetch = false;
 
     public signal void windows_changed ();
 
     public HashTable<string, string> ws_map;
     public List<NiriWindow> windows;
 
-    private bool is_fetching = false;
-
     private NiriWindowManager () {
         ws_map = new HashTable<string, string> (str_hash, str_equal);
         windows = new List<NiriWindow> ();
 
-        Timeout.add (500, on_timeout);
         fetch_data_async.begin ();
+
+        NiriIpc.get_default ().listen_event_stream.begin (() => {
+            if (!is_fetching)
+                fetch_data_async.begin ();
+            else
+                needs_refetch = true;
+            return Source.REMOVE;
+        });
     }
 
     public static NiriWindowManager get_default () {
@@ -156,14 +193,9 @@ public class NiriWindowManager : GLib.Object {
         return _instance;
     }
 
-    private bool on_timeout () {
-        if (!is_fetching)
-            fetch_data_async.begin ();
-        return Source.CONTINUE;
-    }
-
     private async void fetch_data_async () {
         is_fetching = true;
+        needs_refetch = false;
 
         var new_ws_map = yield get_workspace_outputs_async ();
 
@@ -174,6 +206,8 @@ public class NiriWindowManager : GLib.Object {
 
         windows_changed ();
         is_fetching = false;
+        if (needs_refetch)
+            fetch_data_async.begin ();
     }
 
     private async HashTable<string, string> get_workspace_outputs_async () {
