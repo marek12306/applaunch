@@ -8,7 +8,16 @@ public class UnicodeProvider : Object, SearchProvider {
         public string character;
         public string name_down;
         public string display_name;
-        public string hex; // DODANE: przechowujemy oryginalny kod HEX
+        public string hex;
+    }
+
+    private class UnicodeMatch {
+        public int index;
+        public int score;
+        public UnicodeMatch (int index, int score) {
+            this.index = index;
+            this.score = score;
+        }
     }
 
     private UnicodeEntry[] db;
@@ -17,7 +26,6 @@ public class UnicodeProvider : Object, SearchProvider {
     public UnicodeProvider () {
         db = new UnicodeEntry[0];
 
-        // Ładujemy plik z bazą Unicode w tle
         new Thread<void*> ("unicode-loader", () => {
             load_database ();
             return null;
@@ -25,11 +33,9 @@ public class UnicodeProvider : Object, SearchProvider {
     }
 
     private void load_database () {
-        // Budujemy ścieżkę do ~/.local/share/unicode/UnicodeData.txt
         string local_path = Path.build_filename (Environment.get_home_dir (), ".local", "share", "unicode", "UnicodeData.txt");
         string path = local_path;
 
-        // Jeśli pliku nie ma w katalogu domowym, sprawdzamy ścieżki systemowe
         if (!FileUtils.test (path, FileTest.EXISTS))
             path = "/usr/share/unicode/UnicodeData.txt";
         if (!FileUtils.test (path, FileTest.EXISTS))
@@ -78,7 +84,7 @@ public class UnicodeProvider : Object, SearchProvider {
                 db = temp_db;
                 is_loaded = true;
             } catch (Error e) {
-                warning ("Błąd ładowania bazy Unicode: %s", e.message);
+                warning ("Error loading Unicode database: %s", e.message);
             }
         } else {
             warning ("UnicodeData.txt not found in standard locations. Unicode search will be unavailable.");
@@ -101,32 +107,64 @@ public class UnicodeProvider : Object, SearchProvider {
         new Thread<void*> ("unicode-search", () => {
             var local_results = new List<SearchResult> ();
             var icon = new ThemedIcon ("insert-text-symbolic");
-            int count = 0;
 
+            var matches = new List<UnicodeMatch> ();
             string[] search_terms = term.split (" ");
 
             for (int i = 0; i < db.length; i++) {
                 if (cancellable.is_cancelled ())
                     break;
-                if (count >= 50)
-                    break;
 
                 bool matches_all = true;
+                int total_score = 0;
+
                 foreach (string t in search_terms) {
-                    if (t.length > 0 && !db[i].name_down.contains (t)) {
+                    if (t.length == 0)
+                        continue;
+
+                    if (db[i].name_down.contains (t)) {
+                        if (db[i].name_down.has_prefix (t))
+                            // Prefix match gets 100 points
+                            total_score += 100;
+                        else
+                            // Substring match gets 50 points
+                            total_score += 50;
+                    } else if (Utils.fuzzy_subsequence_match (db[i].name_down, t)) {
+                        // Fuzzy match gets 10 points
+                        total_score += 10;
+                    } else {
                         matches_all = false;
                         break;
                     }
                 }
 
                 if (matches_all) {
+                    total_score -= db[i].name_down.length;
+
+                    if (db[i].hex.length >= 5)
+                        total_score += 20;
+
+                    matches.append (new UnicodeMatch (i, total_score));
+                }
+            }
+
+            if (!cancellable.is_cancelled ()) {
+                matches.sort ((a, b) => { return b.score - a.score; });
+
+                int count = 0;
+                foreach (var m in matches) {
+                    if (count >= 50)
+                        break;
+
+                    int i = m.index;
                     string display = db[i].character + " (U+" + db[i].hex + ") - " + db[i].display_name;
                     local_results.append (new SearchResult (db[i].character, display, icon, this));
                     count++;
                 }
+
+                thread_results = (owned) local_results;
             }
 
-            thread_results = (owned) local_results;
             Idle.add ((owned) callback);
             return null;
         });
