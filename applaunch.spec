@@ -1,5 +1,5 @@
 Name:           applaunch
-Version:        0.3.0
+Version:        0.3.1
 Release:        1
 Summary:        Launcher and dock for the Niri compositor
 
@@ -54,6 +54,10 @@ for the Niri compositor.
 %{_bindir}/%{name}
 
 %changelog
+* Sun Mar 22 2026 deepivin <marek12306@gmail.com> 0.3.1-1
+- feat: fix irregular button width in dock (marek12306@gmail.com)
+- feat: improve Unicode search (marek12306@gmail.com)
+
 * Sat Mar 21 2026 deepivin <marek12306@gmail.com> 0.3.0-1
 - feat: use Event Stream instead of polling windows manually
   (marek12306@gmail.com)
