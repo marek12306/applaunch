@@ -26,7 +26,7 @@ class DockAppButton : Button {
         this.add_css_class ("dock-btn");
         this.tooltip_text = info.get_name ();
         this.focusable = false;
-        this.set_size_request (64, 64);
+        this.set_size_request (72, 72);
 
         vbox = new Box (Orientation.VERTICAL, 2);
         vbox.halign = Align.CENTER;
@@ -518,7 +518,7 @@ public class DockWindow : ApplicationWindow {
         launcher_btn.add_css_class ("dock-btn");
         launcher_btn.tooltip_text = "Launcher";
         launcher_btn.focusable = false;
-        launcher_btn.set_size_request (64, 64);
+        launcher_btn.set_size_request (72, 72);
         var launcher_icon = new Image.from_icon_name ("view-app-grid-symbolic");
         launcher_icon.pixel_size = 42;
 
@@ -538,7 +538,7 @@ public class DockWindow : ApplicationWindow {
         overview_btn.add_css_class ("dock-btn");
         overview_btn.tooltip_text = "Overview";
         overview_btn.focusable = false;
-        overview_btn.set_size_request (64, 64);
+        overview_btn.set_size_request (72, 72);
 
         var overview_icon = new Image.from_icon_name ("view-continuous-symbolic");
         overview_icon.pixel_size = 34;
