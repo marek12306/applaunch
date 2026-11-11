@@ -15,7 +15,6 @@ namespace Config {
     public const string css_data = """
         window, window.background {
             background: rgba(30, 30, 30, 0.9);
-            backdrop-filter: blur(100px);
         }
         
         flowboxchild {
@@ -50,7 +49,6 @@ namespace Config {
         /* --- STYL DOCKA --- */
         window.dock-window, window.dock-window.background {
             background: transparent;
-            backdrop-filter: none;
             box-shadow: none;
         }
 

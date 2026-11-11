@@ -5,9 +5,35 @@ class AppFlowBoxChild : FlowBoxChild {
     public Popover? context_menu { get; set; }
 
     public int match_score = 0;
+    public string name_down;
+    public string display_name_down;
+    public string description_down;
+    public string executable_down;
+    public string id_down;
+    public string original_name_down = "";
+    public string keywords_down = "";
+    public string[] mime_types_down;
+    public string sort_key;
 
     public AppFlowBoxChild(AppInfo info) {
         this.app_info = info;
+        name_down = (info.get_name() ?? "").down();
+        display_name_down = (info.get_display_name() ?? "").down();
+        description_down = (info.get_description() ?? "").down();
+        executable_down = (info.get_executable() ?? "").down();
+        id_down = (info.get_id() ?? "").down();
+        sort_key = name_down.collate_key();
+
+        var desktop_info = info as DesktopAppInfo;
+        if (desktop_info != null) {
+            original_name_down = (desktop_info.get_string("Name") ?? "").down();
+            keywords_down = (desktop_info.get_string("Keywords") ?? "").down();
+        }
+
+        unowned string[]? supported_types = info.get_supported_types();
+        mime_types_down = new string[supported_types != null ? supported_types.length : 0];
+        for (int i = 0; i < mime_types_down.length; i++)
+            mime_types_down[i] = supported_types[i].down();
     }
 }
 
@@ -344,8 +370,6 @@ public class AppGrid : Box {
             favorites_flowbox.set_filter_func((child) => { ((AppFlowBoxChild) child).match_score = 0; return true; });
             all_apps_flowbox.set_filter_func((child) => { ((AppFlowBoxChild) child).match_score = 0; return true; });
 
-            favorites_flowbox.invalidate_filter();
-            all_apps_flowbox.invalidate_filter();
             favorites_flowbox.invalidate_sort();
             all_apps_flowbox.invalidate_sort();
 
@@ -356,7 +380,6 @@ public class AppGrid : Box {
         }
 
         all_apps_flowbox.set_filter_func((child) => is_app_matching(child as AppFlowBoxChild, text));
-        all_apps_flowbox.invalidate_filter();
         all_apps_flowbox.invalidate_sort();
 
         unselect_all();
@@ -440,9 +463,7 @@ public class AppGrid : Box {
                 string id2 = app2.app_info.get_id() != null ? app2.app_info.get_id() : app2.app_info.get_name();
                 return Favorites.get_default().get_position(id1) - Favorites.get_default().get_position(id2);
             } else {
-                string name1 = app1.app_info.get_name() != null ? app1.app_info.get_name() : "";
-                string name2 = app2.app_info.get_name() != null ? app2.app_info.get_name() : "";
-                return name1.down().collate(name2.down());
+                return strcmp(app1.sort_key, app2.sort_key);
             }
         });
 
@@ -482,31 +503,18 @@ public class AppGrid : Box {
             return true;
         }
 
-        var info = app_child.app_info;
+        unowned string name = app_child.name_down;
 
-        string name = info.get_name() != null? info.get_name().down() : "";
+        unowned string display_name = app_child.display_name_down;
 
-        string display_name = info.get_display_name() != null? info.get_display_name().down() : "";
+        unowned string desc = app_child.description_down;
 
-        string desc = info.get_description() != null? info.get_description().down() : "";
+        unowned string exec = app_child.executable_down;
 
-        string exec = info.get_executable() != null? info.get_executable().down() : "";
+        unowned string id = app_child.id_down;
 
-        string id = info.get_id() != null? info.get_id().down() : "";
-
-        string original_name = "";
-        string keywords = "";
-
-        var desktop_info = info as DesktopAppInfo;
-        if (desktop_info != null) {
-            string? raw_name = desktop_info.get_string("Name");
-            if (raw_name != null)
-                original_name = raw_name.down();
-
-            string? raw_keywords = desktop_info.get_string("Keywords");
-            if (raw_keywords != null)
-                keywords = raw_keywords.down();
-        }
+        unowned string original_name = app_child.original_name_down;
+        unowned string keywords = app_child.keywords_down;
 
         int score = 0;
 
@@ -524,13 +532,11 @@ public class AppGrid : Box {
             score = 40;
         // 10 score - supported mime types contain text
         else {
-            string[] ? supported_types = info.get_supported_types();
-            if (supported_types != null)
-                foreach (string mime_type in supported_types)
-                    if (mime_type.down().contains(text)) {
-                        score = 10;
-                        break;
-                    }
+            foreach (unowned string mime_type in app_child.mime_types_down)
+                if (mime_type.contains(text)) {
+                    score = 10;
+                    break;
+                }
         }
 
         app_child.match_score = score;
@@ -750,7 +756,7 @@ public class AppGrid : Box {
                 else drag_widget.set_from_icon_name("application-x-executable");
 
                 drag_widget.pixel_size = Config.ICON_SIZE;
-                var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+                var drag_icon = new Gtk.DragIcon.get_for_drag(drag);
                 if (drag_icon != null)
                     drag_icon.set_child(drag_widget);
             });

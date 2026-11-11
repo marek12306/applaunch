@@ -29,6 +29,10 @@ BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(appstream) 
 BuildRequires:  pkgconfig(json-glib-1.0) 
 BuildRequires:  pkgconfig(gee-0.8) 
+BuildRequires:  pkgconfig(gtk4-wayland) >= 4.18
+BuildRequires:  pkgconfig(wayland-client)
+BuildRequires:  pkgconfig(wayland-protocols)
+BuildRequires:  /usr/bin/wayland-scanner
 
 Requires:       niri
 Requires:       qalculate

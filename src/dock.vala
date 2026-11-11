@@ -311,6 +311,7 @@ public class DockWindow : ApplicationWindow {
     private static int global_dock_id = 0;
 
     private Box apps_box;
+    private Box main_box;
     private LauncherWindow launcher;
     private Box wrapper;
     private double current_offset = -100.0;
@@ -366,7 +367,7 @@ public class DockWindow : ApplicationWindow {
         top_trigger.add_css_class ("invisible-trigger");
         wrapper.append (top_trigger);
 
-        var main_box = new Box (Orientation.HORIZONTAL, 8);
+        main_box = new Box (Orientation.HORIZONTAL, 8);
         main_box.add_css_class ("dock-container");
         main_box.margin_top = 0;
         main_box.margin_bottom = 10;
@@ -463,6 +464,14 @@ public class DockWindow : ApplicationWindow {
         windows_changed_id = NiriWindowManager.get_default ().windows_changed.connect (update_windows_ui);
 
         update_windows_ui ();
+    }
+
+    [CCode (cheader_filename = "dock_blur.h", cname = "dock_blur_update")]
+    private static extern void update_blur (Gtk.Native native, Widget dock, int radius, bool visible);
+
+    protected override void snapshot (Gtk.Snapshot snapshot) {
+        update_blur (this, main_box, 20, wrapper.get_opacity () > 0);
+        base.snapshot (snapshot);
     }
 
     public void cleanup () {

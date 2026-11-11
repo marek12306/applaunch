@@ -57,19 +57,20 @@ namespace Utils {
         if (text.length == 0)
             return false;
 
-        int t_len = text.char_count();
-        int q_len = query.char_count();
+        int t_len = text.length;
+        int q_len = query.length;
         if (q_len > t_len)
             return false;
 
         int q_idx = 0;
+        int t_idx = 0;
+        unichar t_char = 0;
 
-        for (int t_idx = 0; t_idx < t_len && q_idx < q_len; t_idx++) {
-            unichar t_char = text.get_char(text.index_of_nth_char(t_idx));
-            unichar q_char = query.get_char(query.index_of_nth_char(q_idx));
+        while (q_idx < q_len && text.get_next_char(ref t_idx, out t_char)) {
+            unichar q_char = query.get_char(q_idx);
 
             if (t_char == q_char)
-                q_idx++;
+                query.get_next_char(ref q_idx, out q_char);
         }
 
         return q_idx == q_len;
